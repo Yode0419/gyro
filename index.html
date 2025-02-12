@@ -7,62 +7,53 @@
     <style>
         body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
         .data { font-size: 20px; margin: 10px; }
-        .dial-container { display: flex; justify-content: center; gap: 20px; margin: 20px; }
-        .dial-wrapper { text-align: center; }
-        .dial { width: 100px; height: 100px; border: 3px solid #000; border-radius: 50%; position: relative; margin: auto; }
-        .needle { width: 3px; height: 50px; background: red; position: absolute; top: 50%; left: 50%; transform-origin: bottom; }
-        .accel-container { width: 150px; height: 150px; border: 2px solid black; border-radius: 50%; position: relative; margin: auto; }
-        .accel-dot { width: 10px; height: 10px; background: blue; border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        .cube-container { width: 200px; height: 200px; perspective: 600px; margin: 20px auto; position: relative; }
+        .cube { width: 100px; height: 60px; background: rgba(0, 0, 255, 0.5); position: absolute; top: 50%; left: 50%; transform-style: preserve-3d; transform: translate(-50%, -50%) rotateX(0deg) rotateY(0deg); }
+        .arrow { position: absolute; font-size: 24px; font-weight: bold; display: none; }
+        .arrow.show { display: block; }
+        .arrow.up { top: -30px; left: 50%; transform: translateX(-50%); }
+        .arrow.down { bottom: -30px; left: 50%; transform: translateX(-50%); }
+        .arrow.left { left: -30px; top: 50%; transform: translateY(-50%); }
+        .arrow.right { right: -30px; top: 50%; transform: translateY(-50%); }
     </style>
 </head>
 <body>
     <h2>手機陀螺儀與加速度數據</h2>
     <p>允許裝置存取陀螺儀以查看數據</p>
     <button id="enableSensors">啟用感測器</button>
+    <button id="resetCube">復位</button>
     
-    <div class="data">旋轉角速度 (deg/s)：</div>
-    <div class="dial-container">
-        <div class="dial-wrapper">
-            <div class="dial"><div id="gyroX" class="needle"></div></div>
-            <p>X 軸</p>
-        </div>
-        <div class="dial-wrapper">
-            <div class="dial"><div id="gyroY" class="needle"></div></div>
-            <p>Y 軸</p>
-        </div>
-        <div class="dial-wrapper">
-            <div class="dial"><div id="gyroZ" class="needle"></div></div>
-            <p>Z 軸</p>
-        </div>
-    </div>
-    
-    <div class="data">加速度 (m/s²)：</div>
-    <div class="accel-container">
-        <div id="accelDot" class="accel-dot"></div>
+    <div class="cube-container">
+        <div id="cube" class="cube"></div>
+        <div id="arrowUp" class="arrow up">⬆</div>
+        <div id="arrowDown" class="arrow down">⬇</div>
+        <div id="arrowLeft" class="arrow left">⬅</div>
+        <div id="arrowRight" class="arrow right">➡</div>
     </div>
     
     <script>
-        function updateDial(id, value, max) {
-            let rotation = (value / max) * 90;
-            document.getElementById(id).style.transform = `rotate(${rotation}deg)`;
-        }
-        
-        function updateAccelDot(x, y, max) {
-            let dot = document.getElementById("accelDot");
-            let offsetX = (x / max) * 50;
-            let offsetY = (y / max) * 50;
-            dot.style.transform = `translate(${offsetX}px, ${-offsetY}px)`;
-        }
+        let initialAlpha = 0, initialBeta = 0, initialGamma = 0;
+        let isInitialSet = false;
         
         function handleOrientation(event) {
-            updateDial("gyroX", event.alpha, 180);
-            updateDial("gyroY", event.beta, 90);
-            updateDial("gyroZ", event.gamma, 90);
+            if (!isInitialSet) {
+                initialAlpha = event.alpha;
+                initialBeta = event.beta;
+                initialGamma = event.gamma;
+                isInitialSet = true;
+            }
+            
+            let rotX = event.beta - initialBeta;
+            let rotY = event.gamma - initialGamma;
+            document.getElementById("cube").style.transform = `translate(-50%, -50%) rotateX(${rotX}deg) rotateY(${rotY}deg)`;
         }
         
         function handleMotion(event) {
-            let accel = event.accelerationIncludingGravity;
-            updateAccelDot(accel.x, accel.y, 10);
+            let accel = event.acceleration;
+            document.getElementById("arrowUp").classList.toggle("show", accel.y < -2);
+            document.getElementById("arrowDown").classList.toggle("show", accel.y > 2);
+            document.getElementById("arrowLeft").classList.toggle("show", accel.x < -2);
+            document.getElementById("arrowRight").classList.toggle("show", accel.x > 2);
         }
         
         document.getElementById("enableSensors").addEventListener("click", () => {
@@ -79,6 +70,10 @@
                 window.addEventListener("deviceorientation", handleOrientation);
                 window.addEventListener("devicemotion", handleMotion);
             }
+        });
+        
+        document.getElementById("resetCube").addEventListener("click", () => {
+            isInitialSet = false;
         });
     </script>
 </body>

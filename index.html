@@ -7,8 +7,8 @@
     <style>
         body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
         .data { font-size: 20px; margin: 10px; }
-        .cube-container { width: 200px; height: 200px; perspective: 600px; margin: 20px auto; position: relative; }
-        .cube { width: 100px; height: 60px; background: rgba(0, 0, 255, 0.5); position: absolute; top: 50%; left: 50%; transform-style: preserve-3d; transform: translate(-50%, -50%) rotateX(0deg) rotateY(0deg); }
+        .cube-container { width: 200px; height: 200px; perspective: 800px; margin: 20px auto; position: relative; }
+        .cube { width: 60px; height: 100px; depth: 20px; background: rgba(0, 0, 255, 0.5); position: absolute; top: 50%; left: 50%; transform-style: preserve-3d; transform: translate(-50%, -50%) rotateX(0deg) rotateY(0deg); }
         .arrow { position: absolute; font-size: 24px; font-weight: bold; display: none; }
         .arrow.show { display: block; }
         .arrow.up { top: -30px; left: 50%; transform: translateX(-50%); }
@@ -50,10 +50,13 @@
         
         function handleMotion(event) {
             let accel = event.acceleration;
-            document.getElementById("arrowUp").classList.toggle("show", accel.y < -2);
-            document.getElementById("arrowDown").classList.toggle("show", accel.y > 2);
-            document.getElementById("arrowLeft").classList.toggle("show", accel.x < -2);
-            document.getElementById("arrowRight").classList.toggle("show", accel.x > 2);
+            let correctedX = accel.x * Math.cos(initialBeta * Math.PI / 180) + accel.z * Math.sin(initialBeta * Math.PI / 180);
+            let correctedY = accel.y;
+            
+            document.getElementById("arrowUp").classList.toggle("show", correctedY < -2);
+            document.getElementById("arrowDown").classList.toggle("show", correctedY > 2);
+            document.getElementById("arrowLeft").classList.toggle("show", correctedX < -2);
+            document.getElementById("arrowRight").classList.toggle("show", correctedX > 2);
         }
         
         document.getElementById("enableSensors").addEventListener("click", () => {

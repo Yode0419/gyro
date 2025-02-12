@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>陀螺儀數據測試</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        .data { font-size: 20px; margin: 10px; }
+    </style>
+</head>
+<body>
+    <h2>手機陀螺儀數據</h2>
+    <p>允許裝置存取陀螺儀以查看數據</p>
+    <button id="enableSensors">啟用感測器</button>
+    
+    <div class="data">旋轉角速度 (deg/s)：</div>
+    <div id="gyroData" class="data">X: 0, Y: 0, Z: 0</div>
+    
+    <div class="data">加速度 (m/s²)：</div>
+    <div id="accelData" class="data">X: 0, Y: 0, Z: 0</div>
+    
+    <script>
+        function handleOrientation(event) {
+            document.getElementById("gyroData").innerText = 
+                `X: ${event.alpha.toFixed(2)}, Y: ${event.beta.toFixed(2)}, Z: ${event.gamma.toFixed(2)}`;
+        }
+        
+        function handleMotion(event) {
+            let accel = event.accelerationIncludingGravity;
+            document.getElementById("accelData").innerText = 
+                `X: ${accel.x.toFixed(2)}, Y: ${accel.y.toFixed(2)}, Z: ${accel.z.toFixed(2)}`;
+        }
+        
+        document.getElementById("enableSensors").addEventListener("click", () => {
+            if (typeof DeviceMotionEvent.requestPermission === 'function') {
+                DeviceMotionEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === "granted") {
+                            window.addEventListener("deviceorientation", handleOrientation);
+                            window.addEventListener("devicemotion", handleMotion);
+                        }
+                    })
+                    .catch(console.error);
+            } else {
+                window.addEventListener("deviceorientation", handleOrientation);
+                window.addEventListener("devicemotion", handleMotion);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -7,14 +7,24 @@
     <style>
         body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
         .data { font-size: 20px; margin: 10px; }
-        .cube-container { width: 200px; height: 200px; perspective: 800px; margin: 20px auto; position: relative; }
-        .cube { width: 60px; height: 100px; depth: 20px; background: rgba(0, 0, 255, 0.5); position: absolute; top: 50%; left: 50%; transform-style: preserve-3d; transform: translate(-50%, -50%) rotateX(0deg) rotateY(0deg); }
-        .arrow { position: absolute; font-size: 24px; font-weight: bold; display: none; }
-        .arrow.show { display: block; }
-        .arrow.up { top: -30px; left: 50%; transform: translateX(-50%); }
-        .arrow.down { bottom: -30px; left: 50%; transform: translateX(-50%); }
-        .arrow.left { left: -30px; top: 50%; transform: translateY(-50%); }
-        .arrow.right { right: -30px; top: 50%; transform: translateY(-50%); }
+        .plane-container { width: 300px; height: 300px; position: relative; margin: 20px auto; border: 2px dashed gray; }
+        .center-line {
+            position: absolute;
+            background: red;
+        }
+        .horizontal-line {
+            width: 100%;
+            height: 2px;
+            top: 50%;
+            left: 0;
+        }
+        .vertical-line {
+            width: 2px;
+            height: 100%;
+            top: 0;
+            left: 50%;
+        }
+        .cube { width: 80px; height: 120px; background: rgba(0, 0, 255, 0.5); position: absolute; top: 50%; left: 50%; transform-style: preserve-3d; transform: translate(-50%, -50%) rotateX(0deg) rotateY(0deg); }
     </style>
 </head>
 <body>
@@ -23,18 +33,18 @@
     <button id="enableSensors">啟用感測器</button>
     <button id="resetCube">復位</button>
     
-    <div class="cube-container">
+    <div class="plane-container">
+        <div class="center-line horizontal-line"></div>
+        <div class="center-line vertical-line"></div>
         <div id="cube" class="cube"></div>
-        <div id="arrowUp" class="arrow up">⬆</div>
-        <div id="arrowDown" class="arrow down">⬇</div>
-        <div id="arrowLeft" class="arrow left">⬅</div>
-        <div id="arrowRight" class="arrow right">➡</div>
     </div>
     
     <script>
         let initialAlpha = 0, initialBeta = 0, initialGamma = 0;
         let isInitialSet = false;
-        
+        let posX = 150, posY = 150, size = 80;
+        const cube = document.getElementById("cube");
+
         function handleOrientation(event) {
             if (!isInitialSet) {
                 initialAlpha = event.alpha;
@@ -45,7 +55,7 @@
             
             let rotX = event.beta - initialBeta;
             let rotY = event.gamma - initialGamma;
-            document.getElementById("cube").style.transform = `translate(-50%, -50%) rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+            cube.style.transform = `translate(-50%, -50%) rotateX(${rotX}deg) rotateY(${rotY}deg)`;
         }
         
         function handleMotion(event) {
@@ -53,10 +63,14 @@
             let correctedX = accel.x * Math.cos(initialBeta * Math.PI / 180) + accel.z * Math.sin(initialBeta * Math.PI / 180);
             let correctedY = accel.y;
             
-            document.getElementById("arrowUp").classList.toggle("show", correctedY < -2);
-            document.getElementById("arrowDown").classList.toggle("show", correctedY > 2);
-            document.getElementById("arrowLeft").classList.toggle("show", correctedX < -2);
-            document.getElementById("arrowRight").classList.toggle("show", correctedX > 2);
+            posX = Math.min(Math.max(posX + correctedX * 2, 0), 300);
+            posY = Math.min(Math.max(posY - correctedY * 2, 0), 300);
+            size = Math.max(40, Math.min(120, size + accel.z * 2));
+            
+            cube.style.left = `${posX}px`;
+            cube.style.top = `${posY}px`;
+            cube.style.width = `${size}px`;
+            cube.style.height = `${size * 1.5}px`;
         }
         
         document.getElementById("enableSensors").addEventListener("click", () => {
@@ -77,6 +91,13 @@
         
         document.getElementById("resetCube").addEventListener("click", () => {
             isInitialSet = false;
+            posX = 150;
+            posY = 150;
+            size = 80;
+            cube.style.left = "150px";
+            cube.style.top = "150px";
+            cube.style.width = "80px";
+            cube.style.height = "120px";
         });
     </script>
 </body>

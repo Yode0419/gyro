@@ -4,27 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>陀螺儀數據測試</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-        .data { font-size: 20px; margin: 10px; }
-        .plane-container { width: 300px; height: 300px; position: relative; margin: 20px auto; border: 2px dashed gray; }
-        .center-line {
-            position: absolute;
-            background: red;
-        }
-        .horizontal-line {
-            width: 100%;
-            height: 2px;
-            top: 50%;
-            left: 0;
-        }
-        .vertical-line {
-            width: 2px;
-            height: 100%;
-            top: 0;
-            left: 50%;
-        }
-        .cube { width: 80px; height: 120px; background: rgba(0, 0, 255, 0.5); position: absolute; top: 50%; left: 50%; transform-style: preserve-3d; transform: translate(-50%, -50%) rotateX(0deg) rotateY(0deg); }
+        canvas { display: block; margin: auto; }
     </style>
 </head>
 <body>
@@ -33,18 +16,34 @@
     <button id="enableSensors">啟用感測器</button>
     <button id="resetCube">復位</button>
     
-    <div class="plane-container">
-        <div class="center-line horizontal-line"></div>
-        <div class="center-line vertical-line"></div>
-        <div id="cube" class="cube"></div>
-    </div>
-    
     <script>
+        let scene, camera, renderer, cube;
         let initialAlpha = 0, initialBeta = 0, initialGamma = 0;
         let isInitialSet = false;
-        let posX = 150, posY = 150, size = 80;
-        const cube = document.getElementById("cube");
-
+        let posX = 0, posY = 0;
+        
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth * 0.8, window.innerHeight * 0.6);
+            document.body.appendChild(renderer.domElement);
+            
+            let geometry = new THREE.BoxGeometry(2, 3, 0.5);
+            let material = new THREE.MeshBasicMaterial({ color: 0x0000ff, wireframe: true });
+            cube = new THREE.Mesh(geometry, material);
+            scene.add(cube);
+            
+            camera.position.set(0, 5, 0);
+            camera.lookAt(0, 0, 0);
+            animate();
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+        
         function handleOrientation(event) {
             if (!isInitialSet) {
                 initialAlpha = event.alpha;
@@ -53,24 +52,21 @@
                 isInitialSet = true;
             }
             
-            let rotX = event.beta - initialBeta;
-            let rotY = event.gamma - initialGamma;
-            cube.style.transform = `translate(-50%, -50%) rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+            let rotX = (event.beta - initialBeta) * (Math.PI / 180);
+            let rotY = (event.gamma - initialGamma) * (Math.PI / 180);
+            
+            cube.rotation.x = rotX;
+            cube.rotation.y = rotY;
         }
         
         function handleMotion(event) {
             let accel = event.acceleration;
-            let correctedX = accel.x * Math.cos(initialBeta * Math.PI / 180) + accel.z * Math.sin(initialBeta * Math.PI / 180);
-            let correctedY = accel.y;
-            
-            posX = Math.min(Math.max(posX + correctedX * 2, 0), 300);
-            posY = Math.min(Math.max(posY - correctedY * 2, 0), 300);
-            size = Math.max(40, Math.min(120, size + accel.z * 2));
-            
-            cube.style.left = `${posX}px`;
-            cube.style.top = `${posY}px`;
-            cube.style.width = `${size}px`;
-            cube.style.height = `${size * 1.5}px`;
+            if (accel) {
+                posX += accel.x * 0.1;
+                posY -= accel.y * 0.1;
+                cube.position.x = posX;
+                cube.position.z = posY;
+            }
         }
         
         document.getElementById("enableSensors").addEventListener("click", () => {
@@ -91,14 +87,13 @@
         
         document.getElementById("resetCube").addEventListener("click", () => {
             isInitialSet = false;
-            posX = 150;
-            posY = 150;
-            size = 80;
-            cube.style.left = "150px";
-            cube.style.top = "150px";
-            cube.style.width = "80px";
-            cube.style.height = "120px";
+            cube.rotation.set(0, 0, 0);
+            cube.position.set(0, 0, 0);
+            posX = 0;
+            posY = 0;
         });
+        
+        init();
     </script>
 </body>
 </html>

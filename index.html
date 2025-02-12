@@ -7,6 +7,7 @@
     <style>
         body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
         .data { font-size: 20px; margin: 10px; }
+        .visualizer { width: 100px; height: 100px; background: red; margin: 20px auto; border-radius: 50%; position: relative; transition: transform 0.1s linear, left 0.1s linear, top 0.1s linear; }
     </style>
 </head>
 <body>
@@ -20,16 +21,27 @@
     <div class="data">加速度 (m/s²)：</div>
     <div id="accelData" class="data">X: 0, Y: 0, Z: 0</div>
     
+    <div class="visualizer" id="visualizer"></div>
+    
     <script>
         function handleOrientation(event) {
             document.getElementById("gyroData").innerText = 
                 `X: ${event.alpha.toFixed(2)}, Y: ${event.beta.toFixed(2)}, Z: ${event.gamma.toFixed(2)}`;
+            
+            let visualizer = document.getElementById("visualizer");
+            visualizer.style.transform = `rotateX(${event.beta}deg) rotateY(${event.gamma}deg)`;
         }
         
         function handleMotion(event) {
             let accel = event.accelerationIncludingGravity;
             document.getElementById("accelData").innerText = 
                 `X: ${accel.x.toFixed(2)}, Y: ${accel.y.toFixed(2)}, Z: ${accel.z.toFixed(2)}`;
+            
+            let visualizer = document.getElementById("visualizer");
+            let x = accel.x * 5;  // 乘數調整移動靈敏度
+            let y = accel.y * 5;
+            visualizer.style.left = `${50 + x}%`;
+            visualizer.style.top = `${50 - y}%`;
         }
         
         document.getElementById("enableSensors").addEventListener("click", () => {

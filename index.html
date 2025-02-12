@@ -7,41 +7,62 @@
     <style>
         body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
         .data { font-size: 20px; margin: 10px; }
-        .visualizer { width: 100px; height: 100px; background: red; margin: 20px auto; border-radius: 50%; position: relative; transition: transform 0.1s linear, left 0.1s linear, top 0.1s linear; }
+        .dial-container { display: flex; justify-content: center; gap: 20px; margin: 20px; }
+        .dial-wrapper { text-align: center; }
+        .dial { width: 100px; height: 100px; border: 3px solid #000; border-radius: 50%; position: relative; margin: auto; }
+        .needle { width: 3px; height: 50px; background: red; position: absolute; top: 50%; left: 50%; transform-origin: bottom; }
+        .accel-container { width: 150px; height: 150px; border: 2px solid black; border-radius: 50%; position: relative; margin: auto; }
+        .accel-dot { width: 10px; height: 10px; background: blue; border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
     </style>
 </head>
 <body>
-    <h2>手機陀螺儀數據</h2>
+    <h2>手機陀螺儀與加速度數據</h2>
     <p>允許裝置存取陀螺儀以查看數據</p>
     <button id="enableSensors">啟用感測器</button>
     
     <div class="data">旋轉角速度 (deg/s)：</div>
-    <div id="gyroData" class="data">X: 0, Y: 0, Z: 0</div>
+    <div class="dial-container">
+        <div class="dial-wrapper">
+            <div class="dial"><div id="gyroX" class="needle"></div></div>
+            <p>X 軸</p>
+        </div>
+        <div class="dial-wrapper">
+            <div class="dial"><div id="gyroY" class="needle"></div></div>
+            <p>Y 軸</p>
+        </div>
+        <div class="dial-wrapper">
+            <div class="dial"><div id="gyroZ" class="needle"></div></div>
+            <p>Z 軸</p>
+        </div>
+    </div>
     
     <div class="data">加速度 (m/s²)：</div>
-    <div id="accelData" class="data">X: 0, Y: 0, Z: 0</div>
-    
-    <div class="visualizer" id="visualizer"></div>
+    <div class="accel-container">
+        <div id="accelDot" class="accel-dot"></div>
+    </div>
     
     <script>
+        function updateDial(id, value, max) {
+            let rotation = (value / max) * 90;
+            document.getElementById(id).style.transform = `rotate(${rotation}deg)`;
+        }
+        
+        function updateAccelDot(x, y, max) {
+            let dot = document.getElementById("accelDot");
+            let offsetX = (x / max) * 50;
+            let offsetY = (y / max) * 50;
+            dot.style.transform = `translate(${offsetX}px, ${-offsetY}px)`;
+        }
+        
         function handleOrientation(event) {
-            document.getElementById("gyroData").innerText = 
-                `X: ${event.alpha.toFixed(2)}, Y: ${event.beta.toFixed(2)}, Z: ${event.gamma.toFixed(2)}`;
-            
-            let visualizer = document.getElementById("visualizer");
-            visualizer.style.transform = `rotateX(${event.beta}deg) rotateY(${event.gamma}deg)`;
+            updateDial("gyroX", event.alpha, 180);
+            updateDial("gyroY", event.beta, 90);
+            updateDial("gyroZ", event.gamma, 90);
         }
         
         function handleMotion(event) {
             let accel = event.accelerationIncludingGravity;
-            document.getElementById("accelData").innerText = 
-                `X: ${accel.x.toFixed(2)}, Y: ${accel.y.toFixed(2)}, Z: ${accel.z.toFixed(2)}`;
-            
-            let visualizer = document.getElementById("visualizer");
-            let x = accel.x * 5;  // 乘數調整移動靈敏度
-            let y = accel.y * 5;
-            visualizer.style.left = `${50 + x}%`;
-            visualizer.style.top = `${50 - y}%`;
+            updateAccelDot(accel.x, accel.y, 10);
         }
         
         document.getElementById("enableSensors").addEventListener("click", () => {
